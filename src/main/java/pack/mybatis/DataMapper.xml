@@ -1,0 +1,721 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd"><!-- xml에 제약 거는 것 -->
+
+<mapper namespace="dev">
+	
+	<select id="selectAdminData" resultType = "admindto" parameterType="String">
+		select * from admin where admin_id = #{adminid}
+	</select>
+	
+	<select id="selectBookDataAll" resultType="nbdto">
+		select * from newbook
+	</select>
+	
+	<select id="selectUserAll" resultType="userdto">
+		select * from user
+	</select>
+	
+	<select id = "selectSellObAll" resultType="obdto">
+		select * from oldbook where ob_state="1"
+	</select>
+	
+	<select id="selectnbOrderAll" resultType="orderdto">
+		select order_no, orderlist_no, order_person, nvl(order_id,"비회원"), nb_name order_bookname, date(order_date) order_date, order_passwd, order_bookno, order_scount, order_state from orderinfo inner join newbook on order_bookno = nb_no where order_booktype = 1 
+	</select>
+	
+	<select id="selectobOrderAll" resultType="orderdto">
+		select order_no, orderlist_no, order_person, nvl(order_id,"비회원"), ob_name order_bookname, date(order_date) order_date, order_passwd, order_bookno, order_scount, order_state from orderinfo inner join oldbook on order_bookno = ob_no where order_booktype = 2
+	</select>
+	
+	<select id = "selectStandbyAll" resultType="obdto">
+		select * from oldbook where ob_state="0"
+	</select>
+	
+	<select id = "selectRentBookAll" resultType="obdto">
+		select * from oldbook where ob_state="2" or ob_state="3"
+	</select>
+	
+	<select id="selectReuseAll" resultType="obdto">
+		select * from oldbook where ob_state="4" or ob_state="5"
+	</select>
+	
+	<select id="selectBestseller" resultType="nbdto">
+		select * from newbook where nb_scount = (select max(nb_scount) from newbook);
+	</select>
+	
+	<select id="selectRentAll" resultType="rdto">
+		select ob_name, ob_author, ob_comp, user_name, user_id, date(rent_sdate) rent_sdate, date(rent_edate) rent_edate from oldbook inner join rentinfo on rent_no = ob_no inner join user on rent_id = user_id
+	</select>
+	
+	<select id="selectUserPointAll" resultType="userdto">
+		select user_id, user_name, user_point from user;
+	</select>
+	
+	<select id="selectNobankAll" resultType="orderdto">
+		select orderlist_no, order_person, date(order_date) order_date, order_state from orderinfo where order_state="0" group by orderlist_no
+	</select>
+	
+	<select id="selectorderAll" resultType="orderdto">
+		select orderlist_no, order_person, date(order_date) order_date, order_state from orderinfo where order_state !="0" group by orderlist_no
+	</select>
+		
+	<select id="selectdelayAll" resultType="rdto">
+		select user_id, user_name, ob_name, (ob_price * 0.5) delpoint, datediff(now(),rent_edate) delaydate, rent_no from oldbook inner join rentinfo on rent_no = ob_no inner join user on user_id = rent_id  where datediff(now(),rent_edate) > 14
+	</select>
+	
+	<select id="selectdelayid" resultType="String">
+		select rent_id from rentinfo where datediff(now(),rent_edate) between 0 and 14
+	</select>
+	
+	<select id="selectdelay" resultType="userdto">
+		select user_id, user_name, user_tel, user_mail, user_penalty, user_dcount from user where user_dcount > 5
+	</select>
+	
+	<select id="selectrefusecount" resultType="userdto">
+		 select user_id, user_name, user_tel, user_mail, user_penalty, count(*) rfcount from oldbook inner join user on ob_userid = user_id where ob_state = "4" or ob_state="5" and year(now())=year(ob_ddate) group by ob_donor having rfcount>10
+	</select>
+	
+	<select id="selectdeluser" resultType="userdto">
+		select * from user where user_penalty="1+2+3"
+	</select>
+	
+	<select id="selectuserpcheck" resultType="userdto">
+		select * from user where user_penalty!="1+2+3" and user_penalty!="x" and user_penalty!="4"
+	</select>
+	
+	<select id="selectdelaydeposit" resultType="orderdto">
+		select orderlist_no, order_person, datediff(now(),order_date) order_delay, order_state, order_scount, order_bookno from orderinfo where order_state ="0" and datediff(now(),order_date) >2 and order_booktype = "1"
+	</select>
+	
+	<select id="selectfaqAll" resultType="faqdto">
+		select * from faqboard
+	</select>
+	
+	<select id="selectfaqType" resultType="faqdto">
+		select * from faqboard where faq_type = #{faq_type}
+	</select>
+	
+	<select id="selectinqAll" resultType="inqdto">
+		select inq_no, inq_title, inq_context, inq_ddate, inq_id, inq_gnum, inq_onum, inq_nested from inquery
+	</select>
+	
+	<select id="selectreviewAll" resultType="reviewdto">
+		select review_no, review_id, nb_name review_name, review_context, date(review_date) review_date, review_rate, review_gonggam from review inner join newbook on nb_no = review_bookno
+	</select>
+	
+	<select id="profit" resultType="orderdto">
+		select sum(order_sum) order_profit, date_format(order_date,'%Y-%m') order_month, count(*) order_count, sum(order_scount) month_scount from orderinfo group by date_format(order_date,'%Y-%m')
+	</select>
+	
+	<select id="obprofit" resultType="orderdto">
+		select round(sum(ob_price*0.5 *order_scount)) order_profit, order_booktype, date_format(order_date,'%Y-%m') order_month, count(*) order_count, sum(order_scount) month_scount from oldbook inner join orderinfo on order_bookno = ob_no where order_booktype="2" group by date_format(order_date,'%Y-%m')
+	</select>
+	
+	<select id="nbprofit" resultType="orderdto">
+		select round(sum(nb_price*order_scount)) order_profit, order_booktype, date_format(order_date,'%Y-%m') order_month, count(*) order_count, sum(order_scount) month_scount from newbook inner join orderinfo on order_bookno = nb_no where order_booktype="1" group by date_format(order_date,'%Y-%m')
+	</select>
+	
+	<select id="profitmonth" resultType="orderdto">
+		select sum(order_sum) order_profit, date_format(order_date,'%Y-%m') order_month, count(*) order_count, sum(order_scount) month_scount from orderinfo group by date_format(order_date,'%Y-%m') having order_month = date_format(now(), '%Y-%m')
+	</select>
+	
+	<select id="obprofitmonth" resultType="orderdto">
+		select round(sum(ob_price*0.5 *order_scount)) order_profit, order_booktype, date_format(order_date,'%Y-%m') order_month, count(*) order_count, sum(order_scount) month_scount from oldbook inner join orderinfo on order_bookno = ob_no where order_booktype="2" group by date_format(order_date,'%Y-%m') having order_month = date_format(now(),'%Y-%m')
+	</select>
+	
+	<select id="nbprofitmonth" resultType="orderdto">
+		select round(sum(nb_price*order_scount)) order_profit, order_booktype, date_format(order_date,'%Y-%m') order_month, count(*) order_count, sum(order_scount) month_scount from newbook inner join orderinfo on order_bookno = nb_no where order_booktype="1" group by date_format(order_date,'%Y-%m') having order_month = date_format(now(),'%Y-%m')
+	</select>
+	
+	<select id="adminyetAll" resultType="admindto">
+		select * from admin where admin_acc = 0
+	</select>
+	
+	<select id="mbreviewmonth"  resultType="reviewdto">
+		select month(review_date) review_month from review group by month(review_date)
+	</select>	
+		
+	<select id="mbestreview" resultType="reviewdto" parameterType="String">
+		select review_no, review_id, review_bookno, nb_name review_name, review_context, date(review_date) review_date, month(review_date) review_month, review_rate, review_gonggam, rn from (select *, rank() over (partition by month(r.review_date) order by r.review_gonggam desc) rn from review r) t inner join newbook on review_bookno=nb_no where t.rn <![CDATA[<=]]>3 ${sql} order by review_month, rn
+	</select>
+	
+	<select id="getadminAll" resultType="admindto">
+		select * from admin
+	</select>
+	
+	<select id="mbsellermonth"  resultType="nbdto">
+		select month(order_date) smonth from orderinfo where order_booktype = "1" group by month(order_date)
+	</select>
+	
+	<select id="mbestseller" resultType="nbdto" parameterType="String">
+		select nb_no,nb_name,month(order_date) smonth, scount, rn from (select *, sum(order_scount) scount, rank() over (partition by month(order_date) order by scount) rn from orderinfo where order_booktype="1" group by month(order_date), order_bookno) t inner join newbook on order_bookno = nb_no where rn <![CDATA[<=]]>3 ${sql} order by month(order_date), rn
+	</select>
+	
+	<select id="mbsellercmonth" resultType="nbdto">
+		select nb_no,nb_name,month(order_date) smonth, scount, rn from (select *, sum(order_scount) scount, rank() over (partition by month(order_date) order by scount) rn from orderinfo where order_booktype="1" group by month(order_date), order_bookno) t inner join newbook on order_bookno = nb_no where rn <![CDATA[<=]]>3 and date_format(order_date,'%Y-%m') = date_format(now(),'%Y-%m')  order by month(order_date), rn
+	</select>
+	
+	<select id="mbrentmonth" resultType="rdto">
+		select month(rent_sdate) rmonth from rentinfo group by month(rent_sdate)
+	</select>
+	
+	<select id="mbestrent" resultType="rdto" parameterType="String">
+		select rent_no,ob_name,month(rent_sdate) rmonth, count, ob_state, ob_userid, rn from (select *,count(*) count, rank() over (partition by month(rent_sdate) order by count desc) rn from rentinfo group by rent_no, month(rent_sdate)) t inner join oldbook on rent_no = ob_no where t.rn <![CDATA[<=]]> 3 ${sql} order by month(rent_sdate), rn
+	</select>
+	
+	<select id="mbrentcmonth" resultType="rdto">
+		select rent_no,ob_name,month(rent_sdate) rmonth, count, ob_state, ob_userid, rn from (select *,count(*) count, rank() over (partition by month(rent_sdate) order by count desc) rn from rentinfo group by rent_no, month(rent_sdate)) t inner join oldbook on rent_no = ob_no where t.rn <![CDATA[<=]]> 3 and date_format(rent_sdate,'%Y-%m') = date_format(now(),'%Y-%m')  order by month(rent_sdate), rn
+	</select>
+	
+	<select id="currentmonth" resultType="String">
+		select date_format(now(),"%Y-%m")
+	</select>
+	
+	<select id="rentking" resultType="rdto">
+		select user_id,user_name, user_tel, user_mail, month(rent_sdate) rmonth, count, rn from (select *,count(*) count, rank() over (partition by month(rent_sdate) order by count desc) rn from rentinfo where month(rent_sdate) = month(now()) group by rent_id) t inner join user on rent_id = user_id where t.rn <![CDATA[<=]]> 3 order by rn
+	</select>
+	
+	<select id="buyking" resultType="orderdto">
+		select user_id,order_person, user_tel, user_mail, month(order_date) omonth, sum, count, rn from (select *, sum(order_scount) sum, count(*) count, rank() over(partition by month(order_date) order by sum desc) rn from orderinfo where month(order_date) = month(now()) group by order_id) t left outer join user on order_id = user_id where t.rn <![CDATA[<=]]> 3 order by rn
+	</select>
+	
+	<select id="getMaxNum" resultType="inqdto">
+		select nvl(max(inq_no), 0) max from inquery
+	</select>
+	
+	<select id="selectInqPart" parameterType="int" resultType="inqdto">
+		select * from inquery where inq_no = #{inq_no}
+	</select>
+	
+	<select id="getmostsellbook" resultType="nbdto">
+		select nb_no, nb_name, nb_author, nb_comp, nb_scount from newbook where nb_scount = (select max(nb_scount) from newbook)
+	</select>
+	
+	<select id="getmostrentbook" resultType="obdto">
+		select ob_no, ob_name, ob_donor, ob_scount from oldbook where ob_scount = (select max(ob_scount) from oldbook)
+	</select>
+	
+	<select id="adminidcheck" resultType="String" parameterType="String">
+		select admin_id from admin where admin_id = #{admin_id}
+	</select>
+	
+	<select id="getchartmonth" parameterType="String" resultType="String">
+		select cmonth from chartprint where cmonth=#{cmonth}
+	</select>
+	
+	
+	<!-- FAQ 게시판 불러오기 용 sql -->
+	<select id="selectQnaAll" resultType="faqdto">
+	SELECT * from faqboard
+	
+	</select>
+	
+	<!--  FAQ 게시판 문의 종류에 따라 불러오기용  -->
+	<select id="selectQnaClass" resultType="faqdto" parameterType="string">
+	SELECT * from faqboard where faq_type = #{faq_type}
+	</select>
+	
+	<insert id="insertBookData" parameterType="nbform">
+		insert into newbook values(default,#{nb_name},#{nb_author},#{nb_inter},#{nb_genre},#{nb_comp},date(#{nb_bdate}),#{nb_stock},#{nb_price},0,0,#{nb_plot},#{nb_image})
+	</insert>
+	
+	<insert id="insertFAQData" parameterType="faqform">
+		insert into faqboard values(default,#{faq_title},#{faq_content},now(),#{faq_type})
+	</insert>
+	
+	
+	<update id="upobstate" parameterType="obform">
+		update oldbook set ob_state=#{ob_state} where ob_no=#{ob_no}
+	</update>
+	
+	<update id="uporderstate" parameterType="orderform">
+		update orderinfo set order_state=#{order_state} where orderlist_no=#{orderlist_no}
+	</update>
+	
+	<update id="obthrow" parameterType="int">
+		update oldbook set ob_state="6" where ob_no=#{ob_no}
+	</update>
+	
+	<update id="upuser" parameterType="userform">
+		update user set user_penalty = "1", user_point= (user_point - #{delpoint}) where user_id = #{user_id} 
+	</update>
+	
+	<update id="updcount" parameterType="String">
+		update user set user_dcount = user_dcount + 1 where user_id = #{user_id}
+	</update>
+	
+	<update id="uppenalty" parameterType="userform">
+		update user set user_penalty = #{user_penalty} where user_id = #{user_id}
+	</update>
+	
+	<update id="updeluser" parameterType="String">
+		update user set user_penalty = "4" where user_id = #{user_id}
+	</update>
+	
+	<update id="upadmin" parameterType="adminform">
+		update admin set admin_acc = #{admin_acc} where admin_id=#{admin_id}
+	</update>
+	
+	<update id="upadminjik" parameterType="adminform">
+		update admin set admin_jik = #{admin_jik} where admin_id =#{admin_id}
+	</update>
+	
+	<update id="upuserpoint" parameterType="userform">
+		update user set user_point = (user_point + #{pluspoint}) where user_id = #{user_id}
+	</update>
+	
+	<update id="upnbstock" parameterType="nbform">
+		update newbook set nb_stock = (nb_stock + #{plusstock}) where nb_no = #{nb_no}
+	</update>
+	
+	<update id="updateOnum" parameterType="inqform">
+		update inquery set inq_onum = inq_onum + 1 where inq_onum >= #{inq_onum} and inq_gnum = #{inq_gnum}
+	</update>
+	
+	<update id="rollbackstock" parameterType="nbform">
+		update newbook set nb_stock = (nb_stock + #{nb_stock}), nb_scount = (nb_scount - #{nb_stock}) where nb_no = #{nb_no}
+	</update>
+	
+	<delete id="rmoldbook" parameterType="int">
+		delete from oldbook where ob_no = #{ob_no}
+	</delete>
+	
+	<delete id="rmrentinfo">
+		delete from rentinfo where datediff(now(),rent_edate) > 14
+	</delete>
+	
+	<delete id="rmorder" parameterType="String">
+		delete from orderinfo where orderlist_no = #{orderlist_no}
+	</delete>
+	
+	<delete id="deladmin" parameterType="String">
+		delete from admin where admin_id = #{admin_id}
+	</delete>
+	
+	<insert id="admininsert" parameterType="adminform">
+      insert into admin values(default, #{admin_id}, #{admin_passwd}, #{admin_name}, #{admin_jik}, default)
+   </insert>
+	
+	<!-- 구매페이지 새책 리스트 select 메소드  -->
+	
+	
+	
+	  
+	<select id="selectGenre" parameterType="String" resultType="nbdto">
+		select * from newbook where nb_genre like concat("%", #{nb_genre}, "%")
+	</select>
+	
+	
+	<select id="selectBest30" resultType="nbdto">
+		select * from newbook order by nb_scount desc limit 30
+	</select>
+	
+	<select id="selectBest" resultType="nbdto">
+		select * from newbook order by nb_scount desc limit 1
+	</select>
+	
+	<select id="selectBookAll" resultType="nbdto">
+		select * from newbook order by nb_no desc
+	</select>
+	  
+	  
+	 <!-- 위에 selectGenre랑 g만 다른데 기능은 다름 -->
+	<select id="selectgenre" parameterType="string" resultType="nbdto" >
+		select * from newbook where nb_genre like concat('%',#{nb_genre},'%')
+	</select>
+
+	<!--  중고책 관련 다독왕, 장르, 베스트 대여도서, 전체리스트 추가본 -->
+	<!--  장르별 검색 -->
+	<select id="oldGenre" parameterType="string" resultType="obdto" >
+      select * from oldbook where ob_state='1' and ob_genre like concat('%',#{ob_genre},'%')
+   </select>
+   
+   <select id="oldGenre2" parameterType="string" resultType="obdto" > <!-- 장르별 2,3등급 -->
+      select * from oldbook where ob_state IN('2','3') and ob_genre like concat('%',#{ob_genre},'%')
+   </select>
+	
+	
+	
+	<select id="oldRandom" resultType="obdto">
+      select * from oldbook where ob_state='1' order by rand() desc limit 2
+   </select>
+	
+	<select id="oldlow" resultType="obdto">
+		select * from oldbook where ob_state='2' or ob_state='3' order by rand() desc limit 2
+	</select>
+	
+	<select id="selectBestRentBook" resultType="obdto"> <!-- 베스트 대여도서 -->
+		select * from oldbook order by ob_scount desc limit 1
+	</select>
+	
+	<select id="selectBestRead" resultType="userdto">
+		select * from user order by user_rentcnt desc limit 1
+	</select>
+	<!-- 여기까지 -->
+	<!-- 중고페이지 1등급 전체조회   -->
+	<select id="oldHigh" resultType="obdto">
+		select * from oldbook where ob_state='1' order by ob_no desc
+	</select>
+	
+	<!--  중고페이지 2등급 전체조회 -->
+	<select id="oldLow" resultType="obdto">
+		select * from oldbook where ob_state='2' or ob_state='3' order by ob_no desc
+	</select>
+	<!-- 새책페이지 검색  -->
+	
+	<!-- 유저 로그인 비교하기 -->
+	<select id="selectUser" resultType="userdto" parameterType="String">
+		select * from user where user_id = #{user_id}
+	</select>
+	
+	
+	<!-- 중고책 기증 부분 -->	
+	<!-- 중고책 기증시 데이터 입력 (가격 값 입력방법...=기본적으로 default 값을 주도록하고, 관리자가 설정할 수 있도록하고, 세션에서 받은 id값 넣어줄 수 있도록 수정해야함.)-->
+	<insert id="insertOldBook" parameterType="hashmap" useGeneratedKeys="true" keyProperty="ob_no">
+	<selectKey keyProperty="ob_no" resultType="int" order="AFTER"> 
+	SELECT last_insert_id()
+	</selectKey>
+<![CDATA[
+	insert into oldbook(ob_name,	ob_author,	ob_inter,	ob_genre, ob_comp, ob_bdate,	ob_state,ob_price,ob_scount,	ob_donor,ob_comment,ob_image,ob_ddate, ob_userid	)
+	values(#{ob_name},#{ob_author},	#{ob_inter},	#{ob_genre},	#{ob_comp},	date_format(#{ob_bdate},"%Y-%m-%d"),	default,	#{ob_price},	default,	#{ob_donor},	#{ob_comment},	default,	sysdate(),	#{ob_userid})
+	]]>
+	</insert>
+	  
+	 <!--  중고책 기증시 파일 입력을 위한 sql문 -->
+	<insert id="insertFile" parameterType="hashmap">
+	 <selectKey keyProperty="idx" order="BEFORE" resultType="int">
+		select ifnull(max(idx), 0)+1 from ob_file where ob_no=#{ob_no}
+	</selectKey>
+ 	<![CDATA[
+	insert into ob_file(idx, ob_no, original_file_name,stored_file_name,file_size,ob_rdate,del_gb)
+	values(default, #{ob_no}, #{original_file_name}, #{stored_file_name}, #{file_size},now(),default)
+	]]>
+	</insert>
+	
+	<!--  중고책 기증 후 결과 보기 -->
+	<select id="selectGiveList" parameterType="string" resultType="obdto"><!-- 세션에서 userid 읽어오는 거 수정필요. -->
+	SELECT user_name,ob_no,ob_name,ob_author,ob_inter,ob_genre,ob_comp,DATE_FORMAT(ob_bdate,'%Y-%m-%d') AS ob_bdate,ob_state,ob_price,ob_scount,ob_readcnt,ob_donor,ob_comment,ob_image,DATE_FORMAT(ob_ddate,'%Y-%m-%d') AS ob_ddate,ob_userid,user_id FROM oldbook JOIN user ON user_id=ob_userid WHERE ob_userid=#{ob_userid}
+	</select>
+	
+	<!-- 회원 가입 -->
+	<!-- 회원 정보 입력 --> <!-- 수정 -->
+	<insert id="insertUser" parameterType="userform">
+		insert into user values (#{user_id}, #{user_name}, #{user_passwd}, #{user_tel}, #{user_addr}, #{user_zip}, #{user_mail}, default, default, #{user_birth}, default, default)
+	</insert>
+		
+	<!--  카드 정보 입력 -->
+	<insert id="insertCard" parameterType="cardform">
+		insert into cardinfo values (#{card_ownerid}, #{card_owner}, #{card_comp}, #{card_no}, #{card_passwd})
+	</insert>
+	
+	<!-- 아이디 중복 체크 -->
+	<select id="checkUserId" parameterType="String" resultType="int">
+		select * from user where user_id = #{user_id}
+	</select>
+	
+	<!-- 구매페이지 -->
+	<!-- 구매페이지 개별 새 책  select 메소드  -->
+   <select id="selectNewbook" resultType="nbdto" parameterType="int">
+      select nb_no, nb_name,   nb_author,   nb_inter, nb_genre, nb_comp, date_format(nb_bdate,'%Y-%m-%d') as nb_bdate,  nb_stock,  nb_price,  nb_scount,
+   nb_readcnt,  nb_plot,  nb_image from newbook  where nb_no = #{nb_no}
+   </select>
+   
+   <!-- 조회수 올리기 -->
+   <update id="plusReadCnt" parameterType="int">
+   		update newbook set nb_readcnt = nb_readcnt+1 where nb_no = #{nb_no};
+   </update>
+   
+   <!-- 구매페이지 개별 새 책  같은 작가 책 띄우기 메소드 -->
+   <select id="selectAuthorList" parameterType="String" resultType="nbdto">
+   		 select * from newbook where nb_author like #{nb_author} limit 3;
+   </select>
+   <!-- 구매페이지 개별 새책 해당 책의 리뷰 띄우기 -->
+   <select id="selectNewbookReviewList" parameterType="int" resultType="reviewdto">
+   		select * from review where review_bookno = #{review_bookno} order by review_date desc
+   </select>
+	<!-- 구매페이지 개별 새책 해당 책의 리뷰 쓰기 -->
+	<insert id="insertNewbookReview" parameterType="reviewform">
+		insert into review values(default, #{review_id}, #{review_bookno}, #{review_context}, #{review_date}, #{review_rate}, #{review_gonggam})
+	</insert>
+	<!-- 구매페이지 개별 새책 해당 책의 특정 리뷰 추천 -->
+	<select id="selectNewbookReview" parameterType="int" resultType="reviewdto">
+   		select * from review where review_no = #{review_no} 
+   </select>
+	<update id="plusGonggam" parameterType="int">
+		update review set review_gonggam = review_gonggam+1 where review_no = #{review_no};
+	</update>
+	<!-- 구매페이지 개별 새책 해당 책의 특정 리뷰 추천 -->
+	<delete id="deleteReview" parameterType="int">
+		 delete from review where review_no=#{review_no};
+	</delete>
+	
+	<!-- 결제 페이지 -->
+	<!-- 결제페이지 회원시 등록된 카드 가져오기 -->
+	<select id="selectCard" parameterType="String" resultType="carddto">
+		select * from cardinfo where card_ownerid = #{card_ownerid} 
+	</select>
+	
+	<!-- 회원일 경우 새책 결제 --><!-- 김나현 수정 -->
+	<insert id="buyNewBookUser" parameterType="orderform">
+		insert into orderinfo values(default,#{orderlist_no},#{order_person},#{order_id},#{order_bookno},#{order_booktype},#{order_date},default,#{order_scount},#{order_paytype},#{order_state},#{order_sum},#{order_address})
+	</insert>
+	
+	<!-- 회원일 경우 포인트 사용할 떄 차감 -->
+	<update id="usePoint" parameterType="userform">
+		update user set user_point = user_point-#{user_point} where user_id=#{user_id}
+	</update>
+	
+	<!-- 비회원일 경우 새책 결제 --><!-- 김나현 수정 -->
+	<insert id="buyNewBookUnuser" parameterType="orderform">
+		insert into orderinfo values(default,#{orderlist_no},#{order_person},#{order_id},#{order_bookno},#{order_booktype},#{order_date},#{order_passwd},#{order_scount},#{order_paytype},#{order_state},#{order_sum}, #{order_address})
+	</insert>
+	
+	<!-- 주문 후 새책 변경사항 -->
+	<!-- 재고량 줄이기 -->
+	<update id="minusNewBookStock" parameterType="nbform">
+		update newbook set nb_stock  = nb_stock  - #{nb_stock} where nb_no = #{nb_no}
+	</update>
+	
+	<!-- 주문량 늘리기 -->
+	<update id="plusNewBookScount" parameterType="nbform">
+		update newbook set nb_scount = nb_scount + #{nb_scount} where nb_no = #{nb_no}
+	</update>
+	
+	<!-- 비회원 일 때 주문내역 가져오기 -->
+	<select id="unmemberOrder" parameterType="orderform" resultType="orderdto">
+		select * from orderinfo where order_no=#{order_no} and order_passwd=#{order_passwd}
+	</select>
+		
+	<!-- 비밀번호로 가장 최근 주문 내역 가져온다. --><!-- 수정20201015 -->
+	<select id="getOrderbyPass" parameterType="String" resultType="orderdto">
+		select * from orderinfo where order_passwd=#{order_passwd} order by order_no desc limit 1;
+	</select>
+	
+	
+		
+	<!--  구매 페이지 (새 책 리스트 보기 select 메소드 ) -->
+	<!-- 조회수 많은 3개 -->
+	<select id="selectReadTop3" resultType="nbdto">
+		select * from newbook order by nb_readcnt  desc limit 3
+	</select>
+	<!-- 랜덤 10가지 -->
+	<select id="selectRandom10" resultType="nbdto">
+		select * from newbook order by rand() limit 10
+	</select>
+	<!-- 출간일 순 -->
+	<select id="selectNew" resultType="nbdto">
+		select * from newbook order by nb_bdate desc
+	</select>
+	  
+	 <!-- 중고책 -->	
+	<!-- 판매 중고책 보기 (상태에 따른 분류)-->
+	<select id="oldbookinfo" resultType="obdto" parameterType="String">
+		select * from oldbook where ob_state='1' and ob_no=#{ob_no}
+	</select>
+	<!-- 대여 중고책 보기 (상태에 따른 분류)-->
+	<select id="oldbookinfo2" resultType="obdto" parameterType="String">
+		select * from oldbook where ob_state In('2','3') and ob_no=#{ob_no}
+	</select>
+	
+	<!-- 김나현 추가 시작-->
+	<!-- 중고책 대여했을 때 대여정보 추가 -->
+	<insert id="rentOldBook" parameterType="rentform">
+		insert into rentinfo values(#{rent_no}, #{rent_id}, #{rent_sdate}, date_add(now(),INTERVAL 13 day), default)
+	</insert>
+	
+	<update id="minusRentPoint" parameterType="String">
+		update user set user_point = user_point-1000 where user_id=#{user_id}
+	</update>
+	
+	<!-- 대출했을 때 1로 변경 -->
+	<update id="updateRentOldBook" parameterType="String">
+		update oldbook set ob_donor = 1 where ob_no = #{ob_no}
+	</update>
+	<!-- 대출했을 때 0로 변경 -->
+	<!--  
+	<update id="updateReturnOldBook" parameterType="String">
+		update oldbook set ob_donor = 0 where ob_no = #{ob_no}
+	</update>
+	-->
+	<select id="getRentInfo" parameterType="String" resultType="rdto">
+		 select rent_no, rent_id, date_format(rent_sdate,'%Y-%m-%d') as rent_sdate, date_format(rent_edate,'%Y-%m-%d') as rent_edate, rent_ecount from rentinfo where rent_id = #{rent_id} order by rent_sdate desc  limit 1;
+	</select>
+	
+	
+	
+	<!-- 김나현  추가 끝 -->
+	
+	<!-- 임유진 추가 시작 -->
+	<!-- 내주문정보 전체 조회 -->
+	<select id="myorderinfoall" resultType="orderdto" parameterType="String">
+		select order_bookno, order_booktype, order_scount, order_sum from orderinfo where orderlist_no = #{orderlist_no}
+	</select>
+	<!-- 내주문번호별 조회 -->
+	<select id="myorderinfo" resultType="orderdto" parameterType="String">
+		select orderlist_no, order_person, date(order_date) order_date, order_paytype, order_state, sum(order_sum) order_sum, order_address from orderinfo where orderlist_no = #{orderlist_no} group by orderlist_no;
+	</select>
+	<!-- 주문정보 삭제 -->
+	<delete id="delmyord" parameterType="int">
+		delete from orderinfo where order_no = #{order_no}
+	</delete>
+	<!-- 재고량, 판매량 수정 -->
+	<update id="upnbc" parameterType="nbform">
+		update newbook set nb_scount = (nb_scount - #{nb_scount}), nb_stock = (nb_stock + #{nb_scount}) where nb_no = #{nb_no}
+	</update>
+	<!-- 내 주문정보 수정 -->
+	<update id="upmyorderinfo" parameterType="orderform">
+		update orderinfo set order_address = #{order_address}, order_person = #{order_person} where orderlist_no = #{orderlist_no}
+	</update>
+	<!-- 대여도서 반납 -->
+	<delete id="delrinf" parameterType="int">
+		delete from rentinfo where rent_no = #{rent_no}
+	</delete>
+	<update id="upobprocess" parameterType="int">
+		update oldbook set ob_donor = "0" where ob_no = #{rent_no}
+	</update>
+	<!-- 중고책 가격 얻기 -->
+	<select id="getobp" parameterType="int" resultType="obdto">
+		select ob_price from oldbook where ob_no = #{ob_no}
+	</select>
+	<!-- 연체반납시 회원 포인트 차감 -->
+	<update id="delpointuser" parameterType="userform">
+		update user set user_point = (user_point - #{delpoint}) where user_id = #{user_id}
+	</update>
+	<!-- 추가 끝 -->
+	
+	<!-- 조회 수 증가 -->
+	<update id="readcntUpdate" parameterType="int">
+		update oldbook set ob_readcnt=ob_readcnt+1 where ob_no=#{ob_no}
+	</update>
+	
+	<!-- 비회원 주문조회 -->
+	<select id="unmembercheck" resultType="orderdto" parameterType="orderform">
+		select * from orderinfo where orderlist_no=#{orderlist_no} and order_passwd=#{order_passwd}
+	</select>
+
+	<!-- 장바구니 -->
+	<select id="cartList" resultType="orderdto">
+		select distinct order_no, orderlist_no, order_person, order_id, order_bookno, order_booktype, order_date, order_passwd, order_scount,
+		order_paytype, order_state, order_sum from orderinfo inner join user on order_person=#{user_name} and order_passwd=""
+	</select>
+	<!-- 장바구니 담기  
+	<insert id="insertBookData111" parameterType="nbform">
+		insert into orderinfo values(default,#{nb_name},#{nb_author},#{nb_inter},#{nb_genre},#{nb_comp},date_format(#{nb_bdate},"%Y-%m-%d"),#{nb_stock},#{nb_price},0,0,#{nb_plot},#{nb_image})
+	</insert>
+	-->
+	<!-- 장바구니 삭제 -->
+	<delete id="deleteData" parameterType="int">
+		delete from orderinfo where order_no=#{order_no}
+	</delete>
+	<!-- 장바구니 끝 -->
+	
+	<!-- MyPage 관련 내용 추가 / 마이페이지 -->
+	<!-- 여기서부터 끝까지 김나현 수정 -->
+	<!-- 추가 수정 - 임유진 -->
+	<!-- 최근 주문 내역 3 리스트 -->
+	<select id="order3list" resultType="orderdto" parameterType="String"> <!-- OrderInfoDto에 ob_name과 nb_name 추가하기 -->
+		select order_date, orderlist_no, order_state, count(*) count, sum(order_scount) sum, sum(order_sum) order_sum from orderinfo where order_id=#{order_id} order by order_date desc limit 3
+	</select>
+	<!-- 전체 주문 내역 리스트 -->
+	<select id="orderlistall" resultType="orderdto" parameterType="String"> <!-- OrderInfoDto에 ob_name과 nb_name 추가하기 -->
+		select order_date, orderlist_no, order_state, count(*) count, sum(order_scount) sum, sum(order_sum) order_sum from orderinfo where order_id=#{order_id} order by order_date desc
+	</select>
+	<!-- 중고책 최근 주문 내역 3 리스트-->
+	<select id="orderold3list" resultType="orderdto" parameterType="String"> <!-- OrderInfoDto에 ob_name과 nb_name 추가하기 -->
+		select order_date, orderlist_no, ob_name, order_state from orderinfo left outer join oldbook on order_bookno=ob_no where order_id=#{order_id} and order_booktype="2" order by order_date desc limit 3
+	</select>
+	<!-- 중고책 전체 주문 내역 리스트-->
+	<select id="orderoldlistall" resultType="orderdto" parameterType="String"> <!-- OrderInfoDto에 ob_name과 nb_name 추가하기 -->
+		select order_no, order_date, orderlist_no, ob_name, order_state, order_booktype from orderinfo inner join oldbook on order_bookno=ob_no where order_id=#{order_id} and order_booktype="2" order by order_date desc
+	</select>
+	<!-- 신책 최근 주문 내역 3 리스트-->
+	<select id="ordernew3list" resultType="orderdto" parameterType="String"> <!-- OrderInfoDto에 ob_name과 nb_name 추가하기 -->
+		select order_date, orderlist_no, nb_name, order_state from orderinfo inner join newbook on order_bookno=nb_no where  order_id=#{order_id} and order_booktype="1" order by order_date desc limit 3
+	</select>
+	<!-- 신책 전체 주문 내역 리스트-->
+	<select id="ordernewlistall" resultType="orderdto" parameterType="String"> <!-- OrderInfoDto에 ob_name과 nb_name 추가하기 -->
+		select order_no, order_date, orderlist_no, order_bookno, nb_name, order_state, order_booktype, order_scount from orderinfo inner join newbook on order_bookno=nb_no where order_id=#{order_id} and order_booktype="1" order by order_date desc
+	</select>
+	<!-- 최근 대여 내역 3 리스트-->
+	<select id="rent3list" resultType="rdto" parameterType="String">
+		select ob_name, rent_no, date_format(rent_sdate,"%Y-%m-%d") as rent_sdate, date_format(rent_edate,"%Y-%m-%d") as rent_edate from oldbook left outer join rentinfo on ob_no=rent_no where rent_id=#{rent_id} order by rent_sdate desc limit 3
+	</select>
+	<!-- 전체 대여 내역 리스트-->
+	<select id="rentlistall" resultType="rdto" parameterType="String">
+		select ob_name, rent_no, date_format(rent_sdate,"%Y-%m-%d") as rent_sdate, date_format(rent_edate,"%Y-%m-%d") as rent_edate from oldbook left outer join rentinfo on ob_no=rent_no where rent_id=#{rent_id} order by rent_sdate desc
+	</select>
+	<!-- 최근 도서 기부 내역 3 리스트 -->
+	<select id="donor3list" resultType="obdto" parameterType="String">
+		select ob_name, ob_comment from oldbook where ob_donor = (select user_name from user where user_id=#{user_id}) order by ob_name desc limit 3
+	</select>
+	<!-- 전체 도서 기부 내역 리스트 -->
+	<select id="donorlistall" resultType="obdto" parameterType="String">
+		select ob_name, ob_comment from oldbook where ob_donor = (select user_name from user where user_id=#{user_id}) order by ob_name desc limit 3
+	</select>
+	<!-- 카드 목록 리스트 -->
+	<select id="card3list" resultType="carddto" parameterType="String">
+		select card_no, card_comp from cardinfo where card_ownerid = #{card_ownerid} order by card_comp desc
+	</select>
+	
+	<!-- 카드 목록 리스트 -->
+	<select id="cardlistall" resultType="carddto" parameterType="String">
+		select card_no, card_comp from cardinfo where card_ownerid = #{card_ownerid} order by card_comp desc
+	</select>
+	
+	<!-- 1:1 문의 내역 3 리스트 -->
+	<select id="inq3list" resultType="inqdto" parameterType="String"> <!-- InqueryDto 항목 바꿈 inq_title, onum 등등 있도록 수정하는게 맞음 -->
+		select inq_title, inq_context, inq_ddate from inquery where inq_id = #{inq_id} order by inq_no asc
+	</select>
+	
+	<!-- 랜덤 새책 추천 한 개 -->
+	<select id="recommandNewBook" resultType="nbdto">
+		select * from newbook  order by rand() desc limit 1
+	</select>
+	<!-- 연장하기 버튼 -->	
+	<update id="uprent" parameterType="int">
+		update rentinfo set rent_ecount="1", rent_edate = date_add(rent_edate,INTERVAL 6 day) where rent_no=#{rent_no}
+	</update>
+	
+
+<!-- 포인트 조회 -->
+	<select id="viewpoint" resultType="userdto" parameterType="string">
+		select * from user where user_id=#{id}
+	</select>
+	
+	<!-- 접수 화면 -->
+	<select id="view" resultType="orderdto" parameterType="string">
+		select * from orderinfo where order_person=#{order_person} order by order_no desc limit 1;
+	</select>
+	
+	<select id="viewoldbook" resultType="obdto" parameterType="string">
+		select * from oldbook where ob_no=${ob_no}
+	</select>
+	
+	<update id="updateOldbook" parameterType="int">
+		update oldbook set ob_donor='10' where ob_no=${ob_no}
+	</update>
+
+	
+	<!--  faq 리스트 상세보기  -->
+	<select id="selectFaqDetail" parameterType="string" resultType="faqdto">
+		select * from faqboard where faq_no =#{faq_no}
+	</select> 
+	
+	<!--  1:1문의하기(고객) -->
+	<insert id="insertInquery" parameterType="string">
+	insert into inquery values(default, #{inq_title}, #{inq_context},sysdate(), #{inq_id}, 0,0,0)
+	</insert>
+	
+	<!--  1:1 문의 내역 보기 -->
+	<select id="selectInqList" parameterType="string" resultType="inqdto">
+	select inq_title, inq_context, inq_ddate from inquery where inq_id = #{inq_id} order by inq_no asc
+	</select>
+	
+	<!--  차트용  -->
+	<select id="getAllChart" resultType="string">
+	select * from chartprint
+	</select>
+	
+</mapper> 

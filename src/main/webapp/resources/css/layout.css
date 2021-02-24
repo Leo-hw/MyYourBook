@@ -1,0 +1,52 @@
+@charset "UTF-8";
+
+
+#container {
+        width: 100%;
+        margin: auto;
+        padding: 20px;
+      }
+      #header {
+        padding: 0;
+        margin: auto;
+        margin-bottom: 20px;
+      }
+      #content {
+        width: 60%;
+        padding: 20px;
+        margin-bottom: 20px;
+        float: left;
+      }
+      #leftbar {
+   	  	 width: 260px;
+        padding: 20px;
+        margin-bottom: 20px;
+        float: left;
+      }
+      #sidebar {
+        width: 260px;
+        padding: 20px;
+        margin-bottom: 20px;
+        float: right;
+      }
+      #footer {
+        clear: both;
+        padding: 0;
+      }
+      @media ( max-width: 480px ) {
+        #container {
+          width: auto;
+        }
+        #content {
+          float: none;
+          width: auto;
+        }
+        #sidebar {
+          float: none;
+          width: auto;
+        }
+        #leftbar {
+          float: none;
+          width: auto;
+        }
+      }

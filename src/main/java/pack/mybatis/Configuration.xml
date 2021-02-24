@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE configuration
+PUBLIC "-//mybatis.org//DTD Config 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-config.dtd">
+
+<configuration>
+	<typeAliases>
+
+		<!-- 관리자 -->
+		<typeAlias type="pack.model.AdminDto" alias="admindto" />
+		<typeAlias type="pack.controller.AdminBean"
+			alias="adminform" />
+
+		<!-- 사용자 -->
+		<typeAlias type="pack.model.UserDto" alias="userdto" />
+		<typeAlias type="pack.controller.UserBean" alias="userform" />
+
+		<!-- 새 도서 -->
+		<typeAlias type="pack.model.NewBookDto" alias="nbdto" />
+		<typeAlias type="pack.controller.NewBookBean" alias="nbform" />
+
+		<!-- 중고도서 -->
+		<typeAlias type="pack.model.OldBookDto" alias="obdto" />
+		<typeAlias type="pack.controller.OldBookBean" alias="obform" />
+
+		<!-- 카드정보 -->
+		<typeAlias type="pack.model.CardInfoDto" alias="carddto" />
+		<typeAlias type="pack.controller.CardInfoBean"
+			alias="cardform" />
+
+		<!-- 후기 -->
+		<typeAlias type="pack.model.ReviewDto" alias="reviewdto" />
+		<typeAlias type="pack.controller.ReviewBean"
+			alias="reviewform" />
+
+		<!-- 주문내역 -->
+		<typeAlias type="pack.model.OrderInfoDto" alias="orderdto" />
+		<typeAlias type="pack.controller.OrderInfoBean"
+			alias="orderform" />
+
+		<!-- FAQ -->
+		<typeAlias type="pack.model.FaqBoardDto" alias="faqdto" />
+		<typeAlias type="pack.controller.FaqBoardBean"
+			alias="faqform" />
+
+		<!-- 1:1 문의 -->
+		<typeAlias type="pack.model.InqueryDto" alias="inqdto" />
+		<typeAlias type="pack.controller.InqueryBean"
+			alias="inqform" />
+
+		<!-- 대여 정보 -->
+		<typeAlias type="pack.model.RentInfoDto" alias="rdto" />
+		<typeAlias type="pack.controller.RentInfoBean"
+			alias="rentform" />
+
+		<!-- 차트 출력 -->
+		<typeAlias type="pack.model.ChartPrintDto" alias="chartdto" />
+		<typeAlias type="pack.controller.ChartPrintBean"
+			alias="chartform" />
+
+	</typeAliases>
+
+	<mappers>
+		<mapper resource="pack/mybatis/DataMapper.xml" />
+	</mappers>
+</configuration>
